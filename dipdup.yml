@@ -1,0 +1,153 @@
+spec_version: 1.2
+package: kolibri_indexer
+
+database:
+  kind: sqlite
+  path: kusd.sqlite3
+
+contracts:
+  kusd_token:
+    address: KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV
+    typename: fa12_token
+  kolibri_oven_factory:
+    address: KT1Mgy95DVzqVBNYhsW93cyHuB57Q94UFhrh
+    typename: kolibri_oven_factory
+  kolibri_oven_factory_new_ovens:
+    address: KT1Mgy95DVzqVBNYhsW93cyHuB57Q94UFhrh # Is actually the oven factory, but
+                                                  # will only parse new kolibri_ovens
+    typename: kolibri_oven
+  kolibri_oven_example:
+    address: KT1Q82mJSj2zxnHejzgXn2iY3EbWnQgTUSd5
+    typename: kolibri_oven
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  kolibri_oven_factory:
+    kind: operation
+    datasource: <datasource>
+    contracts:
+      - <kolibri_oven_factory>
+    types:
+      - origination
+      - transaction
+    handlers:
+      - callback: on_oven_factory_deploy
+        pattern:
+          - type: origination
+            originated_contract: <kolibri_oven_factory>
+
+      - callback: on_oven_factory_set_initial_delegate
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven_factory>
+            entrypoint: setInitialDelegate
+
+#      - callback: on_oven_create
+#        pattern:
+#          - type: origination
+#            source: <kolibri_oven_factory>
+
+  kolibri_oven_factory_new_ovens:
+    kind: operation
+    datasource: <datasource>
+    types:
+      - origination
+    handlers:
+      - callback: on_oven_create
+        pattern:
+          - type: origination
+            source: <kolibri_oven_factory_new_ovens>
+
+  kolibri_oven:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - <kolibri_oven>
+    handlers:
+      - callback: on_kolibri_oven_borrow
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: borrow
+
+      - callback: on_kolibri_oven_repay
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: repay
+
+      - callback: on_kolibri_oven_liquidate
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: liquidate
+
+      - callback: on_kolibri_oven_set_delegate
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: setDelegate
+
+      - callback: on_kolibri_oven_withdraw
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: withdraw
+
+      - callback: on_kolibri_oven_deposit
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: default
+
+      - callback: on_kolibri_oven_update_state
+        pattern:
+          - type: transaction
+            destination: <kolibri_oven>
+            entrypoint: updateState
+
+  kolibri:
+    kind: operation
+    datasource: <datasource>
+#    first_level: 1935000
+    contracts:
+      - <kusd_token>
+    handlers:
+      - callback: on_transfer
+        pattern:
+          - type: transaction
+            destination: <kusd_token>
+            entrypoint: transfer
+
+indexes:
+#  kusd_token:
+#    template: kolibri
+#    values:
+#      datasource: tzkt
+#      kusd_token: kusd_token
+#      kolibri_oven_factory: kolibri_oven_factory
+
+## Only used to generate code
+#  kolibri_oven_example:
+#    template: kolibri_oven
+#    values:
+#      datasource: tzkt
+#      kolibri_oven: kolibri_oven_example
+
+  kolibri_oven_factory:
+    template: kolibri_oven_factory
+    values:
+      datasource: tzkt
+      kolibri_oven_factory: kolibri_oven_factory
+      kolibri_oven_factory_new_ovens: kolibri_oven_factory_new_ovens
+      kolibri_oven_example: kolibri_oven_example
+
+  kolibri_oven_factory_new_ovens:
+    template: kolibri_oven_factory_new_ovens
+    values:
+      datasource: tzkt
+      kolibri_oven_factory_new_ovens: kolibri_oven_factory_new_ovens
