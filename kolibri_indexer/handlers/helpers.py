@@ -6,8 +6,9 @@ from kolibri_indexer.models import Event
 
 async def log_event(item: Union[Transaction, Origination], action: Event.KolibriAction, additional_data: dict):
     return await Event.create(
-        actor=item.data.sender_address,
+        sender=item.data.sender_address,
         target=item.data.target_address,
+        level=item.data.level,
         initiator=item.data.initiator_address,
         action=action,
         timestamp=item.data.timestamp,
@@ -17,5 +18,3 @@ async def log_event(item: Union[Transaction, Origination], action: Event.Kolibri
             'initiator_alias': item.data.initiator_alias
         } | additional_data,
     )
-
-

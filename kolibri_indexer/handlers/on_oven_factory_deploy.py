@@ -7,7 +7,6 @@ async def on_oven_factory_deploy(
     _ctx: HandlerContext,
     kolibri_oven_factory_origination: Origination[KolibriOvenFactoryStorage],
 ) -> None:
-    # Created @ 1330055
     await OvenFactory.create(
         address=kolibri_oven_factory_origination.data.originated_contract_address,
         created=kolibri_oven_factory_origination.data.timestamp,

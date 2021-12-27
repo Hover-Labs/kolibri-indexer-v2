@@ -5,11 +5,10 @@ from kolibri_indexer.models import KolibriOven, OvenFactory, Event
 from kolibri_indexer.types.kolibri_oven.storage import KolibriOvenStorage
 from dipdup.context import HandlerContext
 
-async def on_oven_create(
+async def on_kolibri_oven_create(
     ctx: HandlerContext,
     kolibri_oven_factory_origination: Origination[KolibriOvenStorage],
 ) -> None:
-
     created_oven = await KolibriOven.create(
         address = kolibri_oven_factory_origination.data.originated_contract_address,
         created = kolibri_oven_factory_origination.data.timestamp,

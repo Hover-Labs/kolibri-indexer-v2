@@ -152,3 +152,5 @@ cython_debug/
 .idea/
 
 *.sqlite3*
+
+pg_data/
