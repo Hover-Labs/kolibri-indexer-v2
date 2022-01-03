@@ -3,7 +3,7 @@ from decimal import Decimal
 from tortoise.exceptions import DoesNotExist
 
 from kolibri_indexer.handlers.helpers import log_event
-from kolibri_indexer.models import LiquidityPoolHolder, Event, LiquidityPoolHolderSnapshot
+from kolibri_indexer.models import LiquidityPoolHolder, Event, TokenSnapshot
 from kolibri_indexer.types.liquidity_pool.parameter.transfer import TransferParameter
 from kolibri_indexer.types.liquidity_pool.storage import LiquidityPoolStorage
 from dipdup.models import Transaction
@@ -31,21 +31,24 @@ async def on_liquidity_pool_transfer(
         from_holder.address,
         to_holder.address
     ))
+
     from_holder.qlkusd_holdings -= tx_value
     to_holder.qlkusd_holdings += tx_value
 
-    await LiquidityPoolHolderSnapshot.create(
+    await TokenSnapshot.create(
+        type=TokenSnapshot.Contract.QLKUSD,
         address=to_holder.address,
         level=transfer.data.level,
         hash=transfer.data.hash,
-        qlkusd_holdings=to_holder.qlkusd_holdings
+        holdings=to_holder.qlkusd_holdings
     )
 
-    await LiquidityPoolHolderSnapshot.create(
-        address=from_holder.address,
+    await TokenSnapshot.create(
+        type=TokenSnapshot.Contract.QLKUSD,
+        address=to_holder.address,
         level=transfer.data.level,
         hash=transfer.data.hash,
-        qlkusd_holdings=from_holder.qlkusd_holdings
+        holdings=from_holder.qlkusd_holdings
     )
 
     await log_event(

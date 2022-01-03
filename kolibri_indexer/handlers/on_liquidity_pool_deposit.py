@@ -4,7 +4,7 @@ from dipdup.context import HandlerContext
 from tortoise.exceptions import DoesNotExist
 
 from kolibri_indexer.handlers.helpers import log_event
-from kolibri_indexer.models import LiquidityPoolHolder, Event, LiquidityPoolHolderSnapshot
+from kolibri_indexer.models import LiquidityPoolHolder, Event, TokenSnapshot
 from kolibri_indexer.types.liquidity_pool.storage import LiquidityPoolStorage
 from dipdup.models import Transaction
 from kolibri_indexer.types.liquidity_pool.parameter.mint import MintParameter
@@ -21,8 +21,8 @@ async def on_liquidity_pool_deposit(
         deposit,
         Event.KolibriAction.LP_DEPOSIT,
         {
-            'redeem_amt': deposit.parameter.__root__,
-            'recv_kusd': mint.parameter.value
+            'deposit_amt': deposit.parameter.__root__,
+            'qlkusd_minted': mint.parameter.value
         }
     )
 
@@ -34,11 +34,12 @@ async def on_liquidity_pool_deposit(
         lp_holder = await LiquidityPoolHolder.create(address=deposit.data.sender_address,
                                                      qlkusd_holdings=Decimal(mint.parameter.value))
 
-    await LiquidityPoolHolderSnapshot.create(
+    await TokenSnapshot.create(
+        type=TokenSnapshot.Contract.QLKUSD,
         address=lp_holder.address,
         level=deposit.data.level,
         hash=deposit.data.hash,
-        qlkusd_holdings=lp_holder.qlkusd_holdings,
+        holdings=lp_holder.qlkusd_holdings,
     )
 
     print("Deposit! {} exchanged {:.4f} kUSD for {:.4f} QLkUSD".format(

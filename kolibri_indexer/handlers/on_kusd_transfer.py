@@ -5,7 +5,7 @@ from dipdup.context import HandlerContext
 from tortoise.exceptions import DoesNotExist
 
 from kolibri_indexer.handlers.helpers import log_event
-from kolibri_indexer.models import kUSDHolder, Event, kUSDHolderSnapshot
+from kolibri_indexer.models import kUSDHolder, Event, TokenSnapshot
 from kolibri_indexer.types.fa12_token.storage import Fa12TokenStorage
 from kolibri_indexer.types.fa12_token.parameter.transfer import TransferParameter
 
@@ -35,18 +35,19 @@ async def on_kusd_transfer(
     from_holder.kusd_holdings -= tx_value
     to_holder.kusd_holdings += tx_value
 
-    await kUSDHolderSnapshot.create(
+    await TokenSnapshot.create(
+        type=TokenSnapshot.Contract.KUSD,
         address=to_holder.address,
         level=transfer.data.level,
         hash=transfer.data.hash,
-        kusd_holdings=to_holder.kusd_holdings
+        holdings=to_holder.kusd_holdings
     )
-
-    await kUSDHolderSnapshot.create(
-        address=from_holder.address,
+    await TokenSnapshot.create(
+        type=TokenSnapshot.Contract.KUSD,
+        address=to_holder.address,
         level=transfer.data.level,
         hash=transfer.data.hash,
-        kusd_holdings=from_holder.kusd_holdings
+        holdings=from_holder.kusd_holdings
     )
 
     await log_event(

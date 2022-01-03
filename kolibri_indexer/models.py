@@ -1,30 +1,44 @@
+from decimal import Decimal
 from enum import Enum
 
 from tortoise import Model, fields
 
 class kUSDHolder(Model):
     id = fields.IntField(pk=True)
-    address = fields.CharField(max_length=36, unique=True)
-    kusd_holdings = fields.DecimalField(max_digits=1000, decimal_places=0)
-
-class kUSDHolderSnapshot(Model):
-    id = fields.IntField(pk=True)
-    address = fields.CharField(max_length=36, index=True)
-    level = fields.IntField()
-    hash = fields.TextField()
+    address = fields.CharField(max_length=36, unique=True, index=True)
     kusd_holdings = fields.DecimalField(max_digits=1000, decimal_places=0)
 
 class LiquidityPoolHolder(Model):
     id = fields.IntField(pk=True)
-    address = fields.CharField(max_length=36, unique=True)
+    address = fields.CharField(max_length=36, unique=True, index=True)
     qlkusd_holdings = fields.DecimalField(max_digits=1000, decimal_places=0)
 
-class LiquidityPoolHolderSnapshot(Model):
+class SavingsRateHolder(Model):
     id = fields.IntField(pk=True)
+    address = fields.CharField(max_length=36, unique=True, index=True)
+    ksr_holdings = fields.DecimalField(max_digits=1000, decimal_places=0)
+
+class TokenSnapshot(Model):
+    class Contract(str, Enum):
+        KUSD = 'kUSD'
+        KDAO = 'kDAO'
+        KSR = 'KSR'
+        QLKUSD = 'QLkUSD'
+
+    id = fields.IntField(pk=True)
+    type = fields.CharEnumField(Contract)
     address = fields.CharField(max_length=36, index=True)
     level = fields.IntField()
     hash = fields.TextField()
-    qlkusd_holdings = fields.DecimalField(max_digits=1000, decimal_places=0)
+    holdings = fields.DecimalField(max_digits=1000, decimal_places=0)
+
+    def holdings_without_mantissa(self):
+        if self.type in [self.Contract.KUSD, self.Contract.KDAO]:
+            return self.holdings / Decimal(1e18)
+        elif self.type in [self.Contract.KSR, self.Contract.QLKUSD]:
+            return self.holdings / Decimal(1e36)
+        else:
+            raise Exception("Unknown contract {}".format(self.type))
 
 class HarbingerPrice(Model):
     id = fields.IntField(pk=True)
@@ -37,15 +51,15 @@ class HarbingerPrice(Model):
 
 class KolibriOven(Model):
     id = fields.IntField(pk=True)
-    address = fields.TextField()
+    address = fields.CharField(max_length=36, index=True)
     created = fields.DatetimeField()
-    borrowed_tokens = fields.JSONField()
-    interest_index = fields.JSONField()
+    borrowed_tokens = fields.DecimalField(max_digits=1000, decimal_places=0)
+    interest_index = fields.DecimalField(max_digits=1000, decimal_places=0)
     is_liquidated = fields.BooleanField()
-    owner = fields.TextField()
-    stability_fee_tokens = fields.JSONField()
+    owner = fields.CharField(max_length=36, index=True)
+    stability_fee_tokens = fields.DecimalField(max_digits=1000, decimal_places=0)
     current_delegate = fields.TextField(null=True)
-    tez_deposited = fields.JSONField()
+    tez_deposited = fields.DecimalField(max_digits=1000, decimal_places=0)
 
 class Event(Model):
     class KolibriAction(str, Enum):
@@ -61,9 +75,15 @@ class Event(Model):
         LP_REDEEM = 'LP_REDEEM'
         LP_TRANSFER = 'LP_TRANSFER'
 
-        KUSD_TRANSFER = 'KUSD_TRANSFER'
         KUSD_MINT = 'KUSD_MINT'
         KUSD_BURN = 'KUSD_BURN'
+        KUSD_TRANSFER = 'KUSD_TRANSFER'
+
+        SAVINGS_POOL_DEPOSIT = 'SAVINGS_POOL_DEPOSIT'
+        SAVINGS_POOL_REDEEM = 'SAVINGS_POOL_REDEEM'
+        SAVINGS_POOL_TRANSFER = 'SAVINGS_POOL_TRANSFER'
+
+        ACCRUE_INTEREST_CALL = 'ACCRUE_INTEREST_CALL'
 
     id = fields.IntField(pk=True)
     level = fields.IntField()

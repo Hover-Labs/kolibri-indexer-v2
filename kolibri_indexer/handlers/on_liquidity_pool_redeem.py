@@ -4,7 +4,7 @@ from dipdup.models import Transaction
 from tortoise.exceptions import DoesNotExist
 
 from kolibri_indexer.handlers.helpers import log_event
-from kolibri_indexer.models import LiquidityPoolHolder, Event, LiquidityPoolHolderSnapshot
+from kolibri_indexer.models import LiquidityPoolHolder, Event, TokenSnapshot
 from kolibri_indexer.types.fa12_token.storage import Fa12TokenStorage
 from dipdup.context import HandlerContext
 from kolibri_indexer.types.liquidity_pool.parameter.redeem import RedeemParameter
@@ -34,12 +34,12 @@ async def on_liquidity_pool_redeem(
     except DoesNotExist:
         lp_holder = await LiquidityPoolHolder.create(address=redeem.data.sender_address,
                                                      qlkusd_holdings=Decimal(redeem.parameter.__root__))
-
-    await LiquidityPoolHolderSnapshot.create(
+    await TokenSnapshot.create(
+        type=TokenSnapshot.Contract.QLKUSD,
         address=lp_holder.address,
         level=redeem.data.level,
         hash=redeem.data.hash,
-        qlkusd_holdings=lp_holder.qlkusd_holdings,
+        holdings=lp_holder.qlkusd_holdings,
     )
 
     print("Redeem! {} exchanged {:.4f} QLkUSD for {:.4f} kUSD".format(

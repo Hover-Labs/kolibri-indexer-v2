@@ -1,1 +1,1 @@
-dipdup==4.0.0
+git+git://github.com/dipdup-net/dipdup-py@master#egg=dipdup

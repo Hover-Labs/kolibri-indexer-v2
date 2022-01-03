@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from kolibri_indexer.types.kolibri_oven.parameter.default import DefaultParameter
 from dipdup.models import Transaction
 from kolibri_indexer.types.kolibri_oven.storage import KolibriOvenStorage
@@ -12,7 +14,7 @@ async def on_kolibri_oven_deposit(
 ) -> None:
     oven = await KolibriOven.get(address=default.data.target_address)
 
-    oven.tez_deposited = default.data.amount
+    oven.tez_deposited += Decimal(default.data.amount)
 
     await oven.save()
 

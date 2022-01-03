@@ -31,6 +31,15 @@ contracts:
   liquidity_pool:
     address: KT1AxaBxkFLCUi3f8rdDAAxBKHfzY8LfKDRA
     typename: liquidity_pool
+  quipu_kusd_xtz_dex:
+    address: KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6
+    typename: quipu_fa12_pool
+  kolibri_savings_rate:
+    address: KT18zVySfjcmot2HdsDyv8ScokDHFS9PmsAW
+    typename: savings_rate
+  kolibri_stability_fund:
+    address: KT1AvxXZ3dgnvmUuuv7vCNeDRmxcZaArhPBy
+    typename: stability_fund
 
 datasources:
   tzkt:
@@ -94,64 +103,130 @@ indexes:
 #      datasource: tzkt
 #      kolibri_oven: kolibri_oven_example
 
-#  kusd_token:
+  kusd_token:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - kusd_token
+    handlers:
+      - callback: on_kusd_transfer
+        pattern:
+          - type: transaction
+            destination: kusd_token
+            entrypoint: transfer
+      - callback: on_kusd_mint
+        pattern:
+          - type: transaction
+            destination: kusd_token
+            entrypoint: mint
+      - callback: on_kusd_burn
+        pattern:
+          - type: transaction
+            destination: kusd_token
+            entrypoint: burn
+
+#  kusd_xtz_quipuswap:
 #    kind: operation
 #    datasource: tzkt
 #    contracts:
+#      - quipu_kusd_xtz_dex
 #      - kusd_token
 #    handlers:
-#      - callback: on_kusd_transfer
+#      - callback: on_quipuswap_divest_liquidity
 #        pattern:
+#          - type: transaction
+#            destination: quipu_kusd_xtz_dex
+#            entrypoint: divestLiquidity
 #          - type: transaction
 #            destination: kusd_token
 #            entrypoint: transfer
-#      - callback: on_kusd_mint
+#          - type: transaction
+#            source: quipu_kusd_xtz_dex
+#      - callback: on_quipuswap_invest_liquidity
 #        pattern:
 #          - type: transaction
-#            destination: kusd_token
-#            entrypoint: mint
-#      - callback: on_kusd_burn
-#        pattern:
+#            destination: quipu_kusd_xtz_dex
+#            entrypoint: investLiquidity
 #          - type: transaction
 #            destination: kusd_token
-#            entrypoint: burn
+#            entrypoint: transfer
 
-#  oracle_updates:
-#    kind: big_map
-#    datasource: tzkt
-#    handlers:
-#      - callback: on_normalizer_xtz_update
-#        contract: harbinger_normalizer
-#        path: assetMap
+  kolibri_savings_rate:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - kolibri_savings_rate
+      - kusd_token
+    handlers:
+      - callback: on_savings_rate_deposit
+        pattern:
+          - type: transaction
+            destination: kolibri_savings_rate
+            entrypoint: deposit
+          - type: transaction
+            source: kolibri_savings_rate
+            destination: kolibri_stability_fund
+            entrypoint: accrueInterest
+          - type: transaction
+            destination: kolibri_savings_rate
+            entrypoint: mint
 
-#  liquidity_pool:
-#    kind: operation
-#    datasource: tzkt
-#    contracts:
-#      - liquidity_pool
-#      - kusd_token
-#    handlers:
-#      - callback: on_liquidity_pool_transfer
-#        pattern:
-#          - type: transaction
-#            destination: liquidity_pool
-#            entrypoint: transfer
-#      - callback: on_liquidity_pool_deposit
-#        pattern:
-#          - type: transaction
-#            destination: liquidity_pool
-#            entrypoint: deposit
-#          - type: transaction
-#            destination: liquidity_pool
-#            entrypoint: mint
-#      - callback: on_liquidity_pool_redeem
-#        pattern:
-#          - type: transaction
-#            destination: liquidity_pool
-#            entrypoint: redeem
-#          - type: transaction
-#            destination: kusd_token
-#            entrypoint: transfer
+      - callback: on_savings_rate_redeem
+        pattern:
+          - type: transaction
+            destination: kolibri_savings_rate
+            entrypoint: redeem
+          - type: transaction
+            source: kolibri_savings_rate
+            destination: kolibri_stability_fund
+            entrypoint: accrueInterest
+          - type: transaction
+            destination: kusd_token
+            source: kolibri_savings_rate
+            entrypoint: transfer
+
+      - callback: on_savings_rate_transfer
+        pattern:
+          - type: transaction
+            destination: kolibri_savings_rate
+            entrypoint: transfer
+
+  liquidity_pool:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - liquidity_pool
+      - kusd_token
+    handlers:
+      - callback: on_liquidity_pool_transfer
+        pattern:
+          - type: transaction
+            destination: liquidity_pool
+            entrypoint: transfer
+      - callback: on_liquidity_pool_deposit
+        pattern:
+          - type: transaction
+            destination: liquidity_pool
+            entrypoint: deposit
+          - type: transaction
+            destination: liquidity_pool
+            entrypoint: mint
+      - callback: on_liquidity_pool_redeem
+        pattern:
+          - type: transaction
+            destination: liquidity_pool
+            entrypoint: redeem
+          - type: transaction
+            destination: kusd_token
+            entrypoint: transfer
+
+  oracle_updates:
+    kind: big_map
+    datasource: tzkt
+    handlers:
+      - callback: on_normalizer_xtz_update
+        contract: harbinger_normalizer
+        path: assetMap
 
   kolibri_oven_factory:
     kind: operation
@@ -166,7 +241,6 @@ indexes:
         pattern:
           - type: origination
             originated_contract: kolibri_oven_factory
-
       - callback: on_oven_factory_set_initial_delegate
         pattern:
           - type: transaction
