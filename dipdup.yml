@@ -25,6 +25,9 @@ contracts:
   kolibri_oven_example:
     address: KT1Q82mJSj2zxnHejzgXn2iY3EbWnQgTUSd5
     typename: kolibri_oven
+  kolibri_oven_set_delegate_failing:
+    address: KT1TdV4PMVk2ssQhEw8ch4PNnnVv11JqAzn7
+    typename: kolibri_oven
   harbinger_normalizer:
     address: KT1AdbYiPYb5hDuEuVrfxmFehtnBCXv4Np7r
     typename: harbinger_normalizer
@@ -45,6 +48,16 @@ datasources:
   tzkt:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
+#    url: http://host.docker.internal:5020
+#    http:
+#      cache: True
+#      retry_count: 10
+#      retry_sleep: 1
+#      retry_multiplier: 1.2
+#      ratelimit_rate: 100
+#      ratelimit_period: 60
+#      connection_limit: 25
+#      batch_size: 10000
 
 templates:
   kolibri_oven:
@@ -53,23 +66,23 @@ templates:
     contracts:
       - <kolibri_oven>
     handlers:
-      - callback: on_kolibri_oven_borrow
-        pattern:
-          - type: transaction
-            destination: <kolibri_oven>
-            entrypoint: borrow
-
-      - callback: on_kolibri_oven_repay
-        pattern:
-          - type: transaction
-            destination: <kolibri_oven>
-            entrypoint: repay
-
-      - callback: on_kolibri_oven_liquidate
-        pattern:
-          - type: transaction
-            destination: <kolibri_oven>
-            entrypoint: liquidate
+#      - callback: on_kolibri_oven_borrow
+#        pattern:
+#          - type: transaction
+#            destination: <kolibri_oven>
+#            entrypoint: borrow
+#
+#      - callback: on_kolibri_oven_repay
+#        pattern:
+#          - type: transaction
+#            destination: <kolibri_oven>
+#            entrypoint: repay
+#
+#      - callback: on_kolibri_oven_liquidate
+#        pattern:
+#          - type: transaction
+#            destination: <kolibri_oven>
+#            entrypoint: liquidate
 
       - callback: on_kolibri_oven_set_delegate
         pattern:
@@ -77,53 +90,59 @@ templates:
             destination: <kolibri_oven>
             entrypoint: setDelegate
 
-      - callback: on_kolibri_oven_withdraw
-        pattern:
-          - type: transaction
-            destination: <kolibri_oven>
-            entrypoint: withdraw
-
-      - callback: on_kolibri_oven_deposit
-        pattern:
-          - type: transaction
-            destination: <kolibri_oven>
-            entrypoint: default
-
-      - callback: on_kolibri_oven_update_state
-        pattern:
-          - type: transaction
-            destination: <kolibri_oven>
-            entrypoint: updateState
+#      - callback: on_kolibri_oven_withdraw
+#        pattern:
+#          - type: transaction
+#            destination: <kolibri_oven>
+#            entrypoint: withdraw
+#
+#      - callback: on_kolibri_oven_deposit
+#        pattern:
+#          - type: transaction
+#            destination: <kolibri_oven>
+#            entrypoint: default
+#
+#      - callback: on_kolibri_oven_update_state
+#        pattern:
+#          - type: transaction
+#            destination: <kolibri_oven>
+#            entrypoint: updateState
 
 indexes:
 ## Only used to generate code
-#  kolibri_oven_example:
-#    template: kolibri_oven
-#    values:
-#      datasource: tzkt
-#      kolibri_oven: kolibri_oven_example
+  kolibri_oven_example_works_fine:
+    template: kolibri_oven
+    values:
+      datasource: tzkt
+      kolibri_oven: kolibri_oven_example
 
-  kusd_token:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - kusd_token
-    handlers:
-      - callback: on_kusd_transfer
-        pattern:
-          - type: transaction
-            destination: kusd_token
-            entrypoint: transfer
-      - callback: on_kusd_mint
-        pattern:
-          - type: transaction
-            destination: kusd_token
-            entrypoint: mint
-      - callback: on_kusd_burn
-        pattern:
-          - type: transaction
-            destination: kusd_token
-            entrypoint: burn
+  kolibri_oven_example_doesnt_work:
+    template: kolibri_oven
+    values:
+      datasource: tzkt
+      kolibri_oven: kolibri_oven_set_delegate_failing
+
+#  kusd_token:
+#    kind: operation
+#    datasource: tzkt
+#    contracts:
+#      - kusd_token
+#    handlers:
+#      - callback: on_kusd_transfer
+#        pattern:
+#          - type: transaction
+#            destination: kusd_token
+#            entrypoint: transfer
+#      - callback: on_kusd_mint
+#        pattern:
+#          - type: transaction
+#            destination: kusd_token
+#            entrypoint: mint
+#      - callback: on_kusd_burn
+#        pattern:
+#          - type: transaction
+#            destination: kusd_token
+#            entrypoint: burn
 
 #  kusd_xtz_quipuswap:
 #    kind: operation
@@ -151,109 +170,109 @@ indexes:
 #            destination: kusd_token
 #            entrypoint: transfer
 
-  kolibri_savings_rate:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - kolibri_savings_rate
-      - kusd_token
-    handlers:
-      - callback: on_savings_rate_deposit
-        pattern:
-          - type: transaction
-            destination: kolibri_savings_rate
-            entrypoint: deposit
-          - type: transaction
-            source: kolibri_savings_rate
-            destination: kolibri_stability_fund
-            entrypoint: accrueInterest
-          - type: transaction
-            destination: kolibri_savings_rate
-            entrypoint: mint
+#  kolibri_savings_rate:
+#    kind: operation
+#    datasource: tzkt
+#    contracts:
+#      - kolibri_savings_rate
+#      - kusd_token
+#    handlers:
+#      - callback: on_savings_rate_deposit
+#        pattern:
+#          - type: transaction
+#            destination: kolibri_savings_rate
+#            entrypoint: deposit
+#          - type: transaction
+#            source: kolibri_savings_rate
+#            destination: kolibri_stability_fund
+#            entrypoint: accrueInterest
+#          - type: transaction
+#            destination: kolibri_savings_rate
+#            entrypoint: mint
+#
+#      - callback: on_savings_rate_redeem
+#        pattern:
+#          - type: transaction
+#            destination: kolibri_savings_rate
+#            entrypoint: redeem
+#          - type: transaction
+#            source: kolibri_savings_rate
+#            destination: kolibri_stability_fund
+#            entrypoint: accrueInterest
+#          - type: transaction
+#            destination: kusd_token
+#            source: kolibri_savings_rate
+#            entrypoint: transfer
+#
+#      - callback: on_savings_rate_transfer
+#        pattern:
+#          - type: transaction
+#            destination: kolibri_savings_rate
+#            entrypoint: transfer
 
-      - callback: on_savings_rate_redeem
-        pattern:
-          - type: transaction
-            destination: kolibri_savings_rate
-            entrypoint: redeem
-          - type: transaction
-            source: kolibri_savings_rate
-            destination: kolibri_stability_fund
-            entrypoint: accrueInterest
-          - type: transaction
-            destination: kusd_token
-            source: kolibri_savings_rate
-            entrypoint: transfer
+#  liquidity_pool:
+#    kind: operation
+#    datasource: tzkt
+#    contracts:
+#      - liquidity_pool
+#      - kusd_token
+#    handlers:
+#      - callback: on_liquidity_pool_transfer
+#        pattern:
+#          - type: transaction
+#            destination: liquidity_pool
+#            entrypoint: transfer
+#      - callback: on_liquidity_pool_deposit
+#        pattern:
+#          - type: transaction
+#            destination: liquidity_pool
+#            entrypoint: deposit
+#          - type: transaction
+#            destination: liquidity_pool
+#            entrypoint: mint
+#      - callback: on_liquidity_pool_redeem
+#        pattern:
+#          - type: transaction
+#            destination: liquidity_pool
+#            entrypoint: redeem
+#          - type: transaction
+#            destination: kusd_token
+#            entrypoint: transfer
 
-      - callback: on_savings_rate_transfer
-        pattern:
-          - type: transaction
-            destination: kolibri_savings_rate
-            entrypoint: transfer
+#  oracle_updates:
+#    kind: big_map
+#    datasource: tzkt
+#    handlers:
+#      - callback: on_normalizer_xtz_update
+#        contract: harbinger_normalizer
+#        path: assetMap
 
-  liquidity_pool:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - liquidity_pool
-      - kusd_token
-    handlers:
-      - callback: on_liquidity_pool_transfer
-        pattern:
-          - type: transaction
-            destination: liquidity_pool
-            entrypoint: transfer
-      - callback: on_liquidity_pool_deposit
-        pattern:
-          - type: transaction
-            destination: liquidity_pool
-            entrypoint: deposit
-          - type: transaction
-            destination: liquidity_pool
-            entrypoint: mint
-      - callback: on_liquidity_pool_redeem
-        pattern:
-          - type: transaction
-            destination: liquidity_pool
-            entrypoint: redeem
-          - type: transaction
-            destination: kusd_token
-            entrypoint: transfer
+#  kolibri_oven_factory:
+#    kind: operation
+#    datasource: tzkt
+#    contracts:
+#      - kolibri_oven_factory
+#    types:
+#      - origination
+#      - transaction
+#    handlers:
+#      - callback: on_oven_factory_deploy
+#        pattern:
+#          - type: origination
+#            originated_contract: kolibri_oven_factory
+#      - callback: on_oven_factory_set_initial_delegate
+#        pattern:
+#          - type: transaction
+#            destination: kolibri_oven_factory
+#            entrypoint: setInitialDelegate
 
-  oracle_updates:
-    kind: big_map
-    datasource: tzkt
-    handlers:
-      - callback: on_normalizer_xtz_update
-        contract: harbinger_normalizer
-        path: assetMap
-
-  kolibri_oven_factory:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - kolibri_oven_factory
-    types:
-      - origination
-      - transaction
-    handlers:
-      - callback: on_oven_factory_deploy
-        pattern:
-          - type: origination
-            originated_contract: kolibri_oven_factory
-      - callback: on_oven_factory_set_initial_delegate
-        pattern:
-          - type: transaction
-            destination: kolibri_oven_factory
-            entrypoint: setInitialDelegate
-
-  kolibri_oven_factory_new_ovens:
-    kind: operation
-    datasource: tzkt
-    types:
-      - origination
-    handlers:
-      - callback: on_kolibri_oven_create
-        pattern:
-          - type: origination
-            source: kolibri_oven_factory_new_ovens
+#  kolibri_oven_factory_new_ovens:
+#    kind: operation
+#    datasource: tzkt
+#    types:
+#      - origination
+#    handlers:
+#      - callback: on_kolibri_oven_create
+#        pattern:
+#          - type: origination
+#            source: kolibri_oven_factory_new_ovens
