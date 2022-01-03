@@ -109,7 +109,6 @@ templates:
 #            entrypoint: updateState
 
 indexes:
-## Only used to generate code
   kolibri_oven_example_works_fine:
     template: kolibri_oven
     values:
